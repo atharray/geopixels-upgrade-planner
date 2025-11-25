@@ -3,687 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Economy Optimizer (Throughput Focused)</title>
+    <title>Pixel Economy Optimizer (Aggressive)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e4e4e4;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
             padding: 20px;
             min-height: 100vh;
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 1400px; margin: 0 auto; }
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #d4a5ff; /* Purple for Pixels */
-            font-size: 2.5em;
-            text-shadow: 0 0 20px rgba(212, 165, 255, 0.5);
+            text-align: center; margin-bottom: 30px; color: #a78bfa;
+            font-size: 2.5em; text-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
         }
-
         .controls {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.7); border-radius: 15px; padding: 25px;
+            margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
-
-        .control-group {
-            margin-bottom: 20px;
-        }
-
-        .control-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #d4a5ff;
-        }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
+        .control-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #a78bfa; }
+        .slider-container { display: flex; align-items: center; gap: 15px; }
         input[type="range"] {
-            flex: 1;
-            height: 8px;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            outline: none;
-            -webkit-appearance: none;
+            flex: 1; height: 8px; border-radius: 5px; background: #334155;
+            outline: none; -webkit-appearance: none;
         }
-
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #d4a5ff;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(212, 165, 255, 0.7);
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            border-radius: 50%; background: #a78bfa; cursor: pointer;
+            box-shadow: 0 0 10px rgba(167, 139, 250, 0.7);
         }
-
-        .slider-value {
-            min-width: 80px;
-            text-align: center;
-            font-weight: bold;
-            color: #d4a5ff;
-            font-size: 1.2em;
-        }
-
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-top: 20px;
         }
-
         .stat-card {
-            background: rgba(212, 165, 255, 0.05);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(212, 165, 255, 0.2);
+            background: rgba(51, 65, 85, 0.5); padding: 15px; border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
         .stat-card.highlight {
-            background: rgba(212, 165, 255, 0.15);
-            border: 1px solid rgba(212, 165, 255, 0.5);
-            box-shadow: 0 0 15px rgba(212, 165, 255, 0.1);
+            background: rgba(167, 139, 250, 0.15); border: 1px solid rgba(167, 139, 250, 0.5);
         }
-
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.8;
-            margin-bottom: 5px;
+        .stat-label { font-size: 0.85em; opacity: 0.8; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 1.5em; font-weight: bold; color: #fff; }
+        .button-row { display: flex; gap: 10px; margin-top: 20px; }
+        button {
+            border: none; padding: 12px 24px; border-radius: 8px; color: white;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1em; flex: 1;
         }
-
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .primary-btn {
-            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1em;
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .optimize-btn {
-            background: linear-gradient(135deg, #d4a5ff 0%, #a855f7 100%);
-        }
-
-        .reset-btn {
-            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
-        }
-
-        .optimize-btn:hover {
-            box-shadow: 0 5px 15px rgba(212, 165, 255, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .reset-btn:hover {
-            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .chart-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            height: 400px;
-        }
-
-        .table-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow-x: auto;
-            margin-bottom: 30px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: rgba(212, 165, 255, 0.2);
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid rgba(212, 165, 255, 0.5);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            white-space: nowrap;
-        }
-
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        button.table-btn {
-            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-            border: none;
-            padding: 6px 12px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin: 2px;
-            font-size: 0.8em;
-        }
-
-        button.table-btn:disabled {
-            background: rgba(100, 100, 100, 0.3);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .upgrade-info {
-            font-size: 0.75em;
-            opacity: 0.7;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .day-number {
-            font-weight: bold;
-            color: #d4a5ff;
-        }
-
-        .currency-value {
-            color: #4ade80;
-        }
+        .optimize-btn { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .optimize-btn:hover { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); transform: translateY(-2px); }
+        .reset-btn { background: #475569; }
+        .reset-btn:hover { background: #64748b; }
         
-        .pixel-value {
-            color: #d4a5ff;
-            font-weight: bold;
+        .chart-container {
+            background: rgba(30, 41, 59, 0.7); border-radius: 15px; padding: 20px;
+            height: 400px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .decision-text {
-            color: #fbbf24;
-            font-size: 0.85em;
-            font-style: italic;
+        .table-container {
+            background: rgba(30, 41, 59, 0.7); border-radius: 15px; padding: 20px;
+            overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .calculating {
-            opacity: 0.6;
-            pointer-events: none;
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: rgba(15, 23, 42, 0.8); padding: 15px; text-align: left;
+            color: #a78bfa; border-bottom: 2px solid #334155; white-space: nowrap;
         }
-
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            .button-row {
-                flex-direction: column;
-            }
+        td { padding: 12px 15px; border-bottom: 1px solid #334155; }
+        tr:hover { background: rgba(255, 255, 255, 0.05); }
+        
+        .val-currency { color: #4ade80; font-family: monospace; }
+        .val-pixels { color: #a78bfa; font-weight: bold; }
+        .decision-tag {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 0.8em; margin-right: 4px; margin-bottom: 2px;
         }
+        .tag-speed { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+        .tag-cap { background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.4); }
+        
+        .calculating { opacity: 0.5; pointer-events: none; cursor: wait; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌍 Geopixels Upgrade Planner</h1>
+        <h1>🎨 Pixel Economy Optimizer</h1>
         
         <div class="controls">
             <div class="control-group">
-                <label for="inactiveHours">Inactive Hours per Day (Sleep/Work):</label>
+                <label for="inactiveHours">Inactive Hours per Day (Sleep + Work):</label>
                 <div class="slider-container">
                     <input type="range" id="inactiveHours" min="0" max="24" value="16" step="1">
-                    <span class="slider-value" id="inactiveValue">16 hours</span>
+                    <span class="slider-value" id="inactiveValue">16h</span>
                 </div>
             </div>
             
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Final Rate (Day 30)</div>
-                    <div class="stat-value" id="currentRate">30s</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Final Cap (Day 30)</div>
-                    <div class="stat-value" id="currentCap">60 pixels</div>
-                </div>
                 <div class="stat-card highlight">
-                    <div class="stat-label">🏆 Total Pixels Placed</div>
-                    <div class="stat-value" id="totalPixels" style="color: #d4a5ff;">0</div>
+                    <div class="stat-label">Total Pixels (Day 30)</div>
+                    <div class="stat-value" id="totalPixels" style="color: #a78bfa;">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Banked Currency (Unspent)</div>
-                    <div class="stat-value" id="totalEarnings">0</div>
+                    <div class="stat-label">Final Regen Rate</div>
+                    <div class="stat-value" id="finalRate">30s</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Speed Upgrades</div>
-                    <div class="stat-value" id="speedUpgrades">0</div>
+                    <div class="stat-label">Final Capacity</div>
+                    <div class="stat-value" id="finalCap">60</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Cap Upgrades</div>
-                    <div class="stat-value" id="capUpgrades">0</div>
+                    <div class="stat-label">Leftover Currency</div>
+                    <div class="stat-value" id="finalCurrency">0</div>
                 </div>
             </div>
             
             <div class="button-row">
-                <button class="primary-btn optimize-btn" onclick="autoOptimize()">
-                    🤖 Auto-Optimize (Maximize Pixels)
+                <button class="optimize-btn" onclick="runAutoOptimize()">
+                    ⚡ Auto-Optimize (Aggressive)
                 </button>
-                <button class="primary-btn reset-btn" onclick="resetSimulation()">
-                    🔄 Reset All Upgrades
+                <button class="reset-btn" onclick="resetSim()">
+                    ❌ Reset
                 </button>
             </div>
         </div>
 
         <div class="chart-container">
-            <canvas id="currencyChart"></canvas>
+            <canvas id="mainChart"></canvas>
         </div>
 
         <div class="table-container">
-            <h2 style="margin-bottom: 15px; color: #d4a5ff;">30-Day Strategy</h2>
-            <table id="simulationTable">
+            <table>
                 <thead>
                     <tr>
                         <th>Day</th>
                         <th>Start Bank</th>
-                        <th>Decision Made</th>
-                        <th>Daily Pixels</th>
-                        <th>Cumulative Pixels</th>
+                        <th>Purchases</th>
+                        <th>Pixel Yield</th>
+                        <th>Total Pixels</th>
                         <th>End Bank</th>
-                        <th>Manual Actions</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                </tbody>
+                <tbody id="tableBody"></tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // Constants
-        const PIXELS_PER_CURRENCY = 5;
-        const INITIAL_CURRENCY = 1120;
-        const INITIAL_REGEN_RATE = 30; // seconds
-        const INITIAL_CAPACITY = 60;
-        const CAP_UPGRADE_COST = 50;
-        const CAP_UPGRADE_AMOUNT = 5;
-        const SPEED_UPGRADE_COST = 500;
-        const SPEED_UPGRADE_AMOUNT = 1; // seconds reduced
-        const MIN_REGEN_RATE = 15; // seconds
-
-        // State
-        let state = {
-            inactiveHours: 16,
-            upgrades: {}, // { day: { capUpgrades: n, speedUpgrades: n } }
-            isOptimized: false
+        // --- CONSTANTS ---
+        const CONSTANTS = {
+            PIXELS_PER_CURRENCY: 5,
+            START_CURRENCY: 1120,
+            START_RATE: 30,
+            START_CAP: 60,
+            COST_CAP: 50,
+            GAIN_CAP: 5,
+            COST_SPEED: 500,
+            GAIN_SPEED: 1,
+            MIN_RATE: 15
         };
 
-        let chart = null;
+        // --- STATE ---
+        let state = {
+            inactiveHours: 16,
+            upgrades: {} // { dayNum: { speed: 0, cap: 0 } }
+        };
 
-        // Initialize
-        function init() {
-            setupEventListeners();
-            recalculateAllDays();
+        let chartInstance = null;
+
+        // --- CORE SIMULATION LOGIC ---
+
+        // Helper: Clone stats object
+        function cloneStats(s) {
+            return { ...s };
         }
 
-        function setupEventListeners() {
-            const slider = document.getElementById('inactiveHours');
-            const sliderValue = document.getElementById('inactiveValue');
+        // Helper: Project outcome from a specific day to Day 30 without changing state
+        // This is the "Crystal Ball" function for the optimizer
+        function projectRestOfMonth(startDay, currentStats, inactiveHours) {
+            let simStats = cloneStats(currentStats);
             
-            slider.addEventListener('input', (e) => {
-                state.inactiveHours = parseInt(e.target.value);
-                sliderValue.textContent = `${state.inactiveHours} hours`;
-                recalculateAllDays();
-            });
+            // Loop from current day to end of month
+            // We assume NO MORE upgrades are bought after today for this projection
+            for (let d = startDay; d <= 30; d++) {
+                // 1. Calculate Daily Income based on current stats
+                let activeSec = (24 - inactiveHours) * 3600;
+                let inactiveSec = inactiveHours * 3600;
+                
+                // Active yield (uncapped)
+                let activeYield = activeSec / simStats.regenRate;
+                
+                // Inactive yield (capped)
+                let inactiveRaw = inactiveSec / simStats.regenRate;
+                let inactiveYield = Math.min(inactiveRaw, simStats.capacity);
+                
+                let dailyPixels = activeYield + inactiveYield;
+                let dailyEarnings = dailyPixels / CONSTANTS.PIXELS_PER_CURRENCY;
+                
+                // 2. Accumulate
+                simStats.totalPixels += dailyPixels;
+                simStats.currency += dailyEarnings;
+            }
+            return simStats.totalPixels;
         }
 
-        // Logic: Calculate earnings for a single day based on stats
-        function calculateDailyIncome(regenRate, capacity, inactiveHours) {
-            const activeHours = 24 - inactiveHours;
-            const activeSeconds = activeHours * 3600;
-            const inactiveSeconds = inactiveHours * 3600;
+        // The "Brain" - Aggressive Optimizer
+        function findAggressivePath(inactiveHours) {
+            let optimalUpgrades = {};
             
-            // Active time: all generated pixels are placed
-            const activePixels = activeSeconds / regenRate;
-            
-            // Inactive time: pixels accumulate but are capped
-            const inactivePixelsGenerated = inactiveSeconds / regenRate;
-            const inactivePixelsCapped = Math.min(inactivePixelsGenerated, capacity);
-            
-            const totalPixels = activePixels + inactivePixelsCapped;
-            const totalEarnings = totalPixels / PIXELS_PER_CURRENCY;
-            
-            return {
-                earnings: totalEarnings,
-                pixels: totalPixels
-            };
-        }
-
-        // Logic: Simulate the full 30 days
-        function simulate30Days(upgradesObj, inactiveHours) {
-            const days = [];
+            // We need to track the state progressively as we make decisions
             let currentStats = {
-                regenRate: INITIAL_REGEN_RATE,
-                capacity: INITIAL_CAPACITY,
-                currency: INITIAL_CURRENCY,
-                totalSpeedUpgrades: 0,
-                totalCapUpgrades: 0,
-                totalPixelsPlaced: 0
+                regenRate: CONSTANTS.START_RATE,
+                capacity: CONSTANTS.START_CAP,
+                currency: CONSTANTS.START_CURRENCY,
+                totalPixels: 0
             };
 
             for (let day = 1; day <= 30; day++) {
-                const startingCurrency = currentStats.currency;
+                optimalUpgrades[day] = { speed: 0, cap: 0 };
                 
-                // 1. Calculate Earnings for this day
-                const result = calculateDailyIncome(
-                    currentStats.regenRate,
-                    currentStats.capacity,
-                    inactiveHours
-                );
+                // THE AGGRESSIVE LOOP
+                // Keep buying upgrades on THIS day until we can't or it's not worth it
+                let keepBuying = true;
                 
-                // 2. Add to totals
-                currentStats.totalPixelsPlaced += result.pixels;
-                currentStats.currency += result.earnings;
+                while (keepBuying) {
+                    let bestMove = 'none';
+                    // 1. Calculate Baseline (Stop buying and just finish the month)
+                    let baselineTotal = projectRestOfMonth(day, currentStats, inactiveHours);
+                    let bestTotal = baselineTotal;
+
+                    // 2. Simulate Buying Speed (if affordable)
+                    let speedTotal = -1;
+                    let canAffordSpeed = currentStats.currency >= CONSTANTS.COST_SPEED;
+                    let notMaxed = currentStats.regenRate > CONSTANTS.MIN_RATE;
+                    
+                    if (canAffordSpeed && notMaxed) {
+                        let tempStats = cloneStats(currentStats);
+                        tempStats.currency -= CONSTANTS.COST_SPEED;
+                        tempStats.regenRate -= CONSTANTS.GAIN_SPEED;
+                        speedTotal = projectRestOfMonth(day, tempStats, inactiveHours);
+                    }
+
+                    // 3. Simulate Buying Cap (if affordable)
+                    let capTotal = -1;
+                    let canAffordCap = currentStats.currency >= CONSTANTS.COST_CAP;
+                    
+                    if (canAffordCap) {
+                        let tempStats = cloneStats(currentStats);
+                        tempStats.currency -= CONSTANTS.COST_CAP;
+                        tempStats.capacity += CONSTANTS.GAIN_CAP;
+                        capTotal = projectRestOfMonth(day, tempStats, inactiveHours);
+                    }
+
+                    // 4. Compare Scenarios
+                    // We only buy if it STRICTLY improves the total pixel count
+                    if (speedTotal > bestTotal) {
+                        bestMove = 'speed';
+                        bestTotal = speedTotal;
+                    }
+                    
+                    // If Cap is better than Baseline AND better than Speed (or equal/speed impossible)
+                    if (capTotal > bestTotal) {
+                        bestMove = 'cap';
+                        bestTotal = capTotal;
+                    }
+
+                    // 5. Execute Decision
+                    if (bestMove === 'speed') {
+                        currentStats.currency -= CONSTANTS.COST_SPEED;
+                        currentStats.regenRate -= CONSTANTS.GAIN_SPEED;
+                        optimalUpgrades[day].speed++;
+                    } else if (bestMove === 'cap') {
+                        currentStats.currency -= CONSTANTS.COST_CAP;
+                        currentStats.capacity += CONSTANTS.GAIN_CAP;
+                        optimalUpgrades[day].cap++;
+                    } else {
+                        // No move improved our score, or we are broke.
+                        keepBuying = false; 
+                    }
+                } // End While Loop (Buying Spree)
+
+                // 6. Process the Day Passing (Earn money for tomorrow)
+                let activeSec = (24 - inactiveHours) * 3600;
+                let inactiveSec = inactiveHours * 3600;
                 
-                // 3. Process Upgrades (Spending)
-                const dayUpgrades = upgradesObj[day] || { capUpgrades: 0, speedUpgrades: 0 };
+                let activeYield = activeSec / currentStats.regenRate;
+                let inactiveRaw = inactiveSec / currentStats.regenRate;
+                let inactiveYield = Math.min(inactiveRaw, currentStats.capacity);
                 
-                const capUpgradesCost = dayUpgrades.capUpgrades * CAP_UPGRADE_COST;
-                const speedUpgradesCost = dayUpgrades.speedUpgrades * SPEED_UPGRADE_COST;
-                const totalUpgradeCost = capUpgradesCost + speedUpgradesCost;
+                let dailyPixels = activeYield + inactiveYield;
+                let dailyEarnings = dailyPixels / CONSTANTS.PIXELS_PER_CURRENCY;
                 
-                currentStats.currency -= totalUpgradeCost;
+                currentStats.totalPixels += dailyPixels;
+                currentStats.currency += dailyEarnings;
+            }
+
+            return optimalUpgrades;
+        }
+
+        // Standard Simulator for UI Rendering
+        function simulateFullMonth() {
+            let history = [];
+            let stats = {
+                regenRate: CONSTANTS.START_RATE,
+                capacity: CONSTANTS.START_CAP,
+                currency: CONSTANTS.START_CURRENCY,
+                totalPixels: 0
+            };
+
+            for (let day = 1; day <= 30; day++) {
+                let startBank = stats.currency;
                 
-                // Apply upgrade effects
-                currentStats.capacity += dayUpgrades.capUpgrades * CAP_UPGRADE_AMOUNT;
-                currentStats.regenRate -= dayUpgrades.speedUpgrades * SPEED_UPGRADE_AMOUNT;
-                currentStats.totalSpeedUpgrades += dayUpgrades.speedUpgrades;
-                currentStats.totalCapUpgrades += dayUpgrades.capUpgrades;
+                // Check for upgrades for this day
+                let dayUpgrades = state.upgrades[day] || { speed: 0, cap: 0 };
                 
-                days.push({
-                    day,
-                    startingCurrency,
-                    earnings: result.earnings,
-                    dailyPixels: result.pixels,
-                    totalPixelsPlaced: currentStats.totalPixelsPlaced, // Cumulative
-                    endingCurrency: currentStats.currency,
-                    upgradeCost: totalUpgradeCost,
-                    currentRegenRate: currentStats.regenRate,
-                    currentCapacity: currentStats.capacity,
-                    totalSpeedUpgrades: currentStats.totalSpeedUpgrades,
-                    totalCapUpgrades: currentStats.totalCapUpgrades,
-                    capUpgradesBought: dayUpgrades.capUpgrades,
-                    speedUpgradesBought: dayUpgrades.speedUpgrades
+                // Apply Costs & Stats immediately (assuming bought at start of day)
+                let cost = (dayUpgrades.speed * CONSTANTS.COST_SPEED) + (dayUpgrades.cap * CONSTANTS.COST_CAP);
+                stats.currency -= cost;
+                stats.regenRate -= (dayUpgrades.speed * CONSTANTS.GAIN_SPEED);
+                stats.capacity += (dayUpgrades.cap * CONSTANTS.GAIN_CAP);
+
+                // Calculate Income
+                let activeSec = (24 - state.inactiveHours) * 3600;
+                let inactiveSec = state.inactiveHours * 3600;
+                
+                let activeYield = activeSec / stats.regenRate;
+                let inactiveRaw = inactiveSec / stats.regenRate;
+                let inactiveYield = Math.min(inactiveRaw, stats.capacity);
+                
+                let dailyPixels = activeYield + inactiveYield;
+                let dailyEarnings = dailyPixels / CONSTANTS.PIXELS_PER_CURRENCY;
+                
+                stats.totalPixels += dailyPixels;
+                stats.currency += dailyEarnings;
+
+                history.push({
+                    day: day,
+                    startBank: startBank,
+                    upgrades: dayUpgrades,
+                    dailyPixels: dailyPixels,
+                    totalPixels: stats.totalPixels,
+                    endBank: stats.currency,
+                    currentRate: stats.regenRate,
+                    currentCap: stats.capacity
                 });
             }
-
-            return days;
+            return history;
         }
 
-        function recalculateAllDays() {
-            const days = simulate30Days(state.upgrades, state.inactiveHours);
-            renderTable(days);
-            updateChart(days);
-            updateStats(days);
-        }
+        // --- UI FUNCTIONS ---
 
-        // --- THE OPTIMIZER ---
-        function autoOptimize() {
-            // Reset upgrades first
-            state.upgrades = {};
+        function updateUI(history) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
             
-            const btn = document.querySelector('.optimize-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Crunching Numbers...';
-            btn.classList.add('calculating');
-            
-            // Use setTimeout to allow UI to render the "Calculating" state
-            setTimeout(() => {
-                state.upgrades = findOptimalPath(state.inactiveHours);
-                state.isOptimized = true;
-                recalculateAllDays();
-                btn.innerHTML = originalText;
-                btn.classList.remove('calculating');
-            }, 50);
-        }
+            history.forEach(row => {
+                let tr = document.createElement('tr');
+                
+                let upgradeHtml = '';
+                if(row.upgrades.speed > 0) upgradeHtml += `<span class="decision-tag tag-speed">⚡ ${row.upgrades.speed}x Speed</span>`;
+                if(row.upgrades.cap > 0) upgradeHtml += `<span class="decision-tag tag-cap">📦 ${row.upgrades.cap}x Cap</span>`;
+                if(upgradeHtml === '') upgradeHtml = '<span style="opacity:0.3">—</span>';
 
-        function findOptimalPath(inactiveHours) {
-            // Greedy Lookahead Algorithm focused on TOTAL PIXELS
-            let currentUpgrades = {};
-            
-            for (let currentDay = 1; currentDay <= 30; currentDay++) {
-                // We need to know the state at the start of this day to know what we can afford
-                const preSim = simulate30Days(currentUpgrades, inactiveHours);
-                const dayState = preSim[currentDay - 1]; // Array is 0-indexed
-                
-                const canAffordSpeed = dayState.endingCurrency >= SPEED_UPGRADE_COST; // Use ending because earnings are added before spend
-                const canAffordCap = dayState.endingCurrency >= CAP_UPGRADE_COST;
-                const isSpeedMaxed = dayState.currentRegenRate <= MIN_REGEN_RATE;
-                
-                // Simulate future realities
-                
-                // Scenario A: Do nothing
-                // We look at the very last day (index 29) and check 'totalPixelsPlaced'
-                const scenarioA_result = simulate30Days(currentUpgrades, inactiveHours)[29].totalPixelsPlaced;
-                
-                // Scenario B: Buy Speed (if possible)
-                let scenarioB_result = -1;
-                if (canAffordSpeed && !isSpeedMaxed) {
-                    const tempUpgrades = JSON.parse(JSON.stringify(currentUpgrades));
-                    if (!tempUpgrades[currentDay]) tempUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
-                    tempUpgrades[currentDay].speedUpgrades++;
-                    scenarioB_result = simulate30Days(tempUpgrades, inactiveHours)[29].totalPixelsPlaced;
-                }
-                
-                // Scenario C: Buy Cap (if possible)
-                let scenarioC_result = -1;
-                if (canAffordCap) {
-                    const tempUpgrades = JSON.parse(JSON.stringify(currentUpgrades));
-                    if (!tempUpgrades[currentDay]) tempUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
-                    tempUpgrades[currentDay].capUpgrades++;
-                    scenarioC_result = simulate30Days(tempUpgrades, inactiveHours)[29].totalPixelsPlaced;
-                }
-                
-                // Compare Total Pixels
-                const bestResult = Math.max(scenarioA_result, scenarioB_result, scenarioC_result);
-                
-                if (bestResult === scenarioB_result && scenarioB_result > scenarioA_result) {
-                    if (!currentUpgrades[currentDay]) currentUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
-                    currentUpgrades[currentDay].speedUpgrades++;
-                } else if (bestResult === scenarioC_result && scenarioC_result > scenarioA_result) {
-                    if (!currentUpgrades[currentDay]) currentUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
-                    currentUpgrades[currentDay].capUpgrades++;
-                }
-                // Else do nothing (Scenario A was best or equal)
-            }
-            
-            return currentUpgrades;
-        }
-
-        // --- UI RENDERING ---
-
-        function renderTable(days) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            days.forEach(day => {
-                const row = document.createElement('tr');
-                
-                const canAffordCap = day.endingCurrency >= CAP_UPGRADE_COST;
-                const canAffordSpeed = day.endingCurrency >= SPEED_UPGRADE_COST;
-                const isSpeedMaxed = day.currentRegenRate <= MIN_REGEN_RATE;
-                
-                const currentDayUpgrades = state.upgrades[day.day] || { capUpgrades: 0, speedUpgrades: 0 };
-                
-                let decisionText = '—';
-                if (currentDayUpgrades.speedUpgrades > 0) {
-                    decisionText = `⚡ Speed Upgrade (-${currentDayUpgrades.speedUpgrades}s)`;
-                } else if (currentDayUpgrades.capUpgrades > 0) {
-                    decisionText = `📦 Cap Upgrade (+${currentDayUpgrades.capUpgrades * 5})`;
-                }
-                
-                row.innerHTML = `
-                    <td class="day-number">Day ${day.day}</td>
-                    <td class="currency-value">${day.startingCurrency.toFixed(2)}</td>
-                    <td class="decision-text">${decisionText}</td>
-                    <td class="pixel-value">+${Math.round(day.dailyPixels)}</td>
-                    <td style="opacity: 0.8">${Math.round(day.totalPixelsPlaced).toLocaleString()}</td>
-                    <td class="currency-value">${day.endingCurrency.toFixed(2)}</td>
-                    <td>
-                        <div class="button-group">
-                            <button class="table-btn"
-                                onclick="buyUpgrade(${day.day}, 'cap')" 
-                                ${!canAffordCap ? 'disabled' : ''}>
-                                Cap +5
-                            </button>
-                            <button class="table-btn"
-                                onclick="buyUpgrade(${day.day}, 'speed')" 
-                                ${!canAffordSpeed || isSpeedMaxed ? 'disabled' : ''}>
-                                Speed -1s
-                            </button>
-                        </div>
-                        <div style="font-size: 0.7em; margin-top: 5px; opacity: 0.6;">
-                            Rate: ${day.currentRegenRate}s | Cap: ${day.currentCapacity}
-                        </div>
-                    </td>
+                tr.innerHTML = `
+                    <td style="color: #a78bfa; font-weight:bold;">${row.day}</td>
+                    <td class="val-currency">${row.startBank.toFixed(2)}</td>
+                    <td>${upgradeHtml}</td>
+                    <td class="val-pixels">+${Math.round(row.dailyPixels).toLocaleString()}</td>
+                    <td style="opacity: 0.8">${Math.round(row.totalPixels).toLocaleString()}</td>
+                    <td class="val-currency">${row.endBank.toFixed(2)}</td>
                 `;
-                
-                tbody.appendChild(row);
+                tableBody.appendChild(tr);
             });
+
+            // Update Stats Cards
+            let final = history[29];
+            document.getElementById('totalPixels').innerText = Math.round(final.totalPixels).toLocaleString();
+            document.getElementById('finalRate').innerText = final.currentRate + 's';
+            document.getElementById('finalCap').innerText = final.currentCap + 'px';
+            document.getElementById('finalCurrency').innerText = final.endBank.toFixed(2);
+
+            // Update Chart
+            updateChart(history);
         }
 
-        function buyUpgrade(day, type) {
-            if (!state.upgrades[day]) {
-                state.upgrades[day] = { capUpgrades: 0, speedUpgrades: 0 };
-            }
-            
-            if (type === 'cap') {
-                state.upgrades[day].capUpgrades++;
-            } else if (type === 'speed') {
-                state.upgrades[day].speedUpgrades++;
-            }
-            
-            state.isOptimized = false;
-            recalculateAllDays();
-        }
+        function updateChart(history) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
 
-        function updateChart(days) {
-            const ctx = document.getElementById('currencyChart').getContext('2d');
-            
-            if (chart) {
-                chart.destroy();
-            }
-
-            chart = new Chart(ctx, {
+            chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: days.map(d => `Day ${d.day}`),
+                    labels: history.map(h => `Day ${h.day}`),
                     datasets: [{
-                        label: 'Total Pixels Placed (Cumulative)',
-                        data: days.map(d => d.totalPixelsPlaced),
-                        borderColor: '#d4a5ff',
-                        backgroundColor: 'rgba(212, 165, 255, 0.1)',
-                        borderWidth: 3,
+                        label: 'Total Pixels Placed',
+                        data: history.map(h => h.totalPixels),
+                        borderColor: '#a78bfa',
+                        backgroundColor: 'rgba(167, 139, 250, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 3,
-                        pointBackgroundColor: '#d4a5ff',
+                        pointRadius: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#e4e4e4' } },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return `Pixels: ${Math.round(context.raw).toLocaleString()}`;
-                                }
-                            }
-                        }
+                        legend: { labels: { color: '#cbd5e1' } },
+                        tooltip: { mode: 'index', intersect: false }
                     },
                     scales: {
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#e4e4e4' },
-                            title: { display: true, text: 'Total Pixels Placed', color: '#d4a5ff' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                            ticks: { color: '#e4e4e4' }
-                        }
+                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
                     }
                 }
             });
         }
 
-        function updateStats(days) {
-            const lastDay = days[days.length - 1];
-            document.getElementById('currentRate').textContent = `${lastDay.currentRegenRate}s`;
-            document.getElementById('currentCap').textContent = `${lastDay.currentCapacity} pixels`;
-            document.getElementById('totalPixels').textContent = Math.round(lastDay.totalPixelsPlaced).toLocaleString();
-            document.getElementById('totalEarnings').textContent = lastDay.endingCurrency.toFixed(2);
-            document.getElementById('speedUpgrades').textContent = lastDay.totalSpeedUpgrades;
-            document.getElementById('capUpgrades').textContent = lastDay.totalCapUpgrades;
+        function runAutoOptimize() {
+            let btn = document.querySelector('.optimize-btn');
+            btn.innerHTML = '⚙️ Calculating...';
+            btn.classList.add('calculating');
+
+            setTimeout(() => {
+                state.upgrades = findAggressivePath(state.inactiveHours);
+                let history = simulateFullMonth();
+                updateUI(history);
+                
+                btn.innerHTML = '⚡ Auto-Optimize (Aggressive)';
+                btn.classList.remove('calculating');
+            }, 50);
         }
 
-        function resetSimulation() {
+        function resetSim() {
             state.upgrades = {};
-            state.isOptimized = false;
-            recalculateAllDays();
+            let history = simulateFullMonth();
+            updateUI(history);
         }
 
-        // Initialize on load
-        init();
+        // Init
+        document.getElementById('inactiveHours').addEventListener('input', (e) => {
+            document.getElementById('inactiveValue').innerText = e.target.value + 'h';
+            state.inactiveHours = parseInt(e.target.value);
+            // Re-run current upgrades with new hours or reset? 
+            // Usually safer to reset or re-calc. Let's re-calc sim with existing upgrades.
+            let history = simulateFullMonth();
+            updateUI(history);
+        });
+
+        // Run once on load
+        resetSim();
+
     </script>
 </body>
 </html>
