@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Economy Optimizer (Throughput Focused)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #d4a5ff; /* Purple for Pixels */
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(212, 165, 255, 0.5);
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #d4a5ff;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #d4a5ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(212, 165, 255, 0.7);
+        }
+
+        .slider-value {
+            min-width: 80px;
+            text-align: center;
+            font-weight: bold;
+            color: #d4a5ff;
+            font-size: 1.2em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(212, 165, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 165, 255, 0.2);
+        }
+
+        .stat-card.highlight {
+            background: rgba(212, 165, 255, 0.15);
+            border: 1px solid rgba(212, 165, 255, 0.5);
+            box-shadow: 0 0 15px rgba(212, 165, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .optimize-btn {
+            background: linear-gradient(135deg, #d4a5ff 0%, #a855f7 100%);
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+        }
+
+        .optimize-btn:hover {
+            box-shadow: 0 5px 15px rgba(212, 165, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .reset-btn:hover {
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: 400px;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(212, 165, 255, 0.2);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(212, 165, 255, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        button.table-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 2px;
+            font-size: 0.8em;
+        }
+
+        button.table-btn:disabled {
+            background: rgba(100, 100, 100, 0.3);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .upgrade-info {
+            font-size: 0.75em;
+            opacity: 0.7;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .day-number {
+            font-weight: bold;
+            color: #d4a5ff;
+        }
+
+        .currency-value {
+            color: #4ade80;
+        }
+        
+        .pixel-value {
+            color: #d4a5ff;
+            font-weight: bold;
+        }
+
+        .decision-text {
+            color: #fbbf24;
+            font-size: 0.85em;
+            font-style: italic;
+        }
+
+        .calculating {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .button-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Geopixels Upgrade Planner</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="inactiveHours">Inactive Hours per Day (Sleep/Work):</label>
+                <div class="slider-container">
+                    <input type="range" id="inactiveHours" min="0" max="24" value="16" step="1">
+                    <span class="slider-value" id="inactiveValue">16 hours</span>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Final Rate (Day 30)</div>
+                    <div class="stat-value" id="currentRate">30s</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Final Cap (Day 30)</div>
+                    <div class="stat-value" id="currentCap">60 pixels</div>
+                </div>
+                <div class="stat-card highlight">
+                    <div class="stat-label">🏆 Total Pixels Placed</div>
+                    <div class="stat-value" id="totalPixels" style="color: #d4a5ff;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Banked Currency (Unspent)</div>
+                    <div class="stat-value" id="totalEarnings">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Speed Upgrades</div>
+                    <div class="stat-value" id="speedUpgrades">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Cap Upgrades</div>
+                    <div class="stat-value" id="capUpgrades">0</div>
+                </div>
+            </div>
+            
+            <div class="button-row">
+                <button class="primary-btn optimize-btn" onclick="autoOptimize()">
+                    🤖 Auto-Optimize (Maximize Pixels)
+                </button>
+                <button class="primary-btn reset-btn" onclick="resetSimulation()">
+                    🔄 Reset All Upgrades
+                </button>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="currencyChart"></canvas>
+        </div>
+
+        <div class="table-container">
+            <h2 style="margin-bottom: 15px; color: #d4a5ff;">30-Day Strategy</h2>
+            <table id="simulationTable">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Start Bank</th>
+                        <th>Decision Made</th>
+                        <th>Daily Pixels</th>
+                        <th>Cumulative Pixels</th>
+                        <th>End Bank</th>
+                        <th>Manual Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const PIXELS_PER_CURRENCY = 5;
+        const INITIAL_CURRENCY = 1120;
+        const INITIAL_REGEN_RATE = 30; // seconds
+        const INITIAL_CAPACITY = 60;
+        const CAP_UPGRADE_COST = 50;
+        const CAP_UPGRADE_AMOUNT = 5;
+        const SPEED_UPGRADE_COST = 500;
+        const SPEED_UPGRADE_AMOUNT = 1; // seconds reduced
+        const MIN_REGEN_RATE = 15; // seconds
+
+        // State
+        let state = {
+            inactiveHours: 16,
+            upgrades: {}, // { day: { capUpgrades: n, speedUpgrades: n } }
+            isOptimized: false
+        };
+
+        let chart = null;
+
+        // Initialize
+        function init() {
+            setupEventListeners();
+            recalculateAllDays();
+        }
+
+        function setupEventListeners() {
+            const slider = document.getElementById('inactiveHours');
+            const sliderValue = document.getElementById('inactiveValue');
+            
+            slider.addEventListener('input', (e) => {
+                state.inactiveHours = parseInt(e.target.value);
+                sliderValue.textContent = `${state.inactiveHours} hours`;
+                recalculateAllDays();
+            });
+        }
+
+        // Logic: Calculate earnings for a single day based on stats
+        function calculateDailyIncome(regenRate, capacity, inactiveHours) {
+            const activeHours = 24 - inactiveHours;
+            const activeSeconds = activeHours * 3600;
+            const inactiveSeconds = inactiveHours * 3600;
+            
+            // Active time: all generated pixels are placed
+            const activePixels = activeSeconds / regenRate;
+            
+            // Inactive time: pixels accumulate but are capped
+            const inactivePixelsGenerated = inactiveSeconds / regenRate;
+            const inactivePixelsCapped = Math.min(inactivePixelsGenerated, capacity);
+            
+            const totalPixels = activePixels + inactivePixelsCapped;
+            const totalEarnings = totalPixels / PIXELS_PER_CURRENCY;
+            
+            return {
+                earnings: totalEarnings,
+                pixels: totalPixels
+            };
+        }
+
+        // Logic: Simulate the full 30 days
+        function simulate30Days(upgradesObj, inactiveHours) {
+            const days = [];
+            let currentStats = {
+                regenRate: INITIAL_REGEN_RATE,
+                capacity: INITIAL_CAPACITY,
+                currency: INITIAL_CURRENCY,
+                totalSpeedUpgrades: 0,
+                totalCapUpgrades: 0,
+                totalPixelsPlaced: 0
+            };
+
+            for (let day = 1; day <= 30; day++) {
+                const startingCurrency = currentStats.currency;
+                
+                // 1. Calculate Earnings for this day
+                const result = calculateDailyIncome(
+                    currentStats.regenRate,
+                    currentStats.capacity,
+                    inactiveHours
+                );
+                
+                // 2. Add to totals
+                currentStats.totalPixelsPlaced += result.pixels;
+                currentStats.currency += result.earnings;
+                
+                // 3. Process Upgrades (Spending)
+                const dayUpgrades = upgradesObj[day] || { capUpgrades: 0, speedUpgrades: 0 };
+                
+                const capUpgradesCost = dayUpgrades.capUpgrades * CAP_UPGRADE_COST;
+                const speedUpgradesCost = dayUpgrades.speedUpgrades * SPEED_UPGRADE_COST;
+                const totalUpgradeCost = capUpgradesCost + speedUpgradesCost;
+                
+                currentStats.currency -= totalUpgradeCost;
+                
+                // Apply upgrade effects
+                currentStats.capacity += dayUpgrades.capUpgrades * CAP_UPGRADE_AMOUNT;
+                currentStats.regenRate -= dayUpgrades.speedUpgrades * SPEED_UPGRADE_AMOUNT;
+                currentStats.totalSpeedUpgrades += dayUpgrades.speedUpgrades;
+                currentStats.totalCapUpgrades += dayUpgrades.capUpgrades;
+                
+                days.push({
+                    day,
+                    startingCurrency,
+                    earnings: result.earnings,
+                    dailyPixels: result.pixels,
+                    totalPixelsPlaced: currentStats.totalPixelsPlaced, // Cumulative
+                    endingCurrency: currentStats.currency,
+                    upgradeCost: totalUpgradeCost,
+                    currentRegenRate: currentStats.regenRate,
+                    currentCapacity: currentStats.capacity,
+                    totalSpeedUpgrades: currentStats.totalSpeedUpgrades,
+                    totalCapUpgrades: currentStats.totalCapUpgrades,
+                    capUpgradesBought: dayUpgrades.capUpgrades,
+                    speedUpgradesBought: dayUpgrades.speedUpgrades
+                });
+            }
+
+            return days;
+        }
+
+        function recalculateAllDays() {
+            const days = simulate30Days(state.upgrades, state.inactiveHours);
+            renderTable(days);
+            updateChart(days);
+            updateStats(days);
+        }
+
+        // --- THE OPTIMIZER ---
+        function autoOptimize() {
+            // Reset upgrades first
+            state.upgrades = {};
+            
+            const btn = document.querySelector('.optimize-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Crunching Numbers...';
+            btn.classList.add('calculating');
+            
+            // Use setTimeout to allow UI to render the "Calculating" state
+            setTimeout(() => {
+                state.upgrades = findOptimalPath(state.inactiveHours);
+                state.isOptimized = true;
+                recalculateAllDays();
+                btn.innerHTML = originalText;
+                btn.classList.remove('calculating');
+            }, 50);
+        }
+
+        function findOptimalPath(inactiveHours) {
+            // Greedy Lookahead Algorithm focused on TOTAL PIXELS
+            let currentUpgrades = {};
+            
+            for (let currentDay = 1; currentDay <= 30; currentDay++) {
+                // We need to know the state at the start of this day to know what we can afford
+                const preSim = simulate30Days(currentUpgrades, inactiveHours);
+                const dayState = preSim[currentDay - 1]; // Array is 0-indexed
+                
+                const canAffordSpeed = dayState.endingCurrency >= SPEED_UPGRADE_COST; // Use ending because earnings are added before spend
+                const canAffordCap = dayState.endingCurrency >= CAP_UPGRADE_COST;
+                const isSpeedMaxed = dayState.currentRegenRate <= MIN_REGEN_RATE;
+                
+                // Simulate future realities
+                
+                // Scenario A: Do nothing
+                // We look at the very last day (index 29) and check 'totalPixelsPlaced'
+                const scenarioA_result = simulate30Days(currentUpgrades, inactiveHours)[29].totalPixelsPlaced;
+                
+                // Scenario B: Buy Speed (if possible)
+                let scenarioB_result = -1;
+                if (canAffordSpeed && !isSpeedMaxed) {
+                    const tempUpgrades = JSON.parse(JSON.stringify(currentUpgrades));
+                    if (!tempUpgrades[currentDay]) tempUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
+                    tempUpgrades[currentDay].speedUpgrades++;
+                    scenarioB_result = simulate30Days(tempUpgrades, inactiveHours)[29].totalPixelsPlaced;
+                }
+                
+                // Scenario C: Buy Cap (if possible)
+                let scenarioC_result = -1;
+                if (canAffordCap) {
+                    const tempUpgrades = JSON.parse(JSON.stringify(currentUpgrades));
+                    if (!tempUpgrades[currentDay]) tempUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
+                    tempUpgrades[currentDay].capUpgrades++;
+                    scenarioC_result = simulate30Days(tempUpgrades, inactiveHours)[29].totalPixelsPlaced;
+                }
+                
+                // Compare Total Pixels
+                const bestResult = Math.max(scenarioA_result, scenarioB_result, scenarioC_result);
+                
+                if (bestResult === scenarioB_result && scenarioB_result > scenarioA_result) {
+                    if (!currentUpgrades[currentDay]) currentUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
+                    currentUpgrades[currentDay].speedUpgrades++;
+                } else if (bestResult === scenarioC_result && scenarioC_result > scenarioA_result) {
+                    if (!currentUpgrades[currentDay]) currentUpgrades[currentDay] = { capUpgrades: 0, speedUpgrades: 0 };
+                    currentUpgrades[currentDay].capUpgrades++;
+                }
+                // Else do nothing (Scenario A was best or equal)
+            }
+            
+            return currentUpgrades;
+        }
+
+        // --- UI RENDERING ---
+
+        function renderTable(days) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            days.forEach(day => {
+                const row = document.createElement('tr');
+                
+                const canAffordCap = day.endingCurrency >= CAP_UPGRADE_COST;
+                const canAffordSpeed = day.endingCurrency >= SPEED_UPGRADE_COST;
+                const isSpeedMaxed = day.currentRegenRate <= MIN_REGEN_RATE;
+                
+                const currentDayUpgrades = state.upgrades[day.day] || { capUpgrades: 0, speedUpgrades: 0 };
+                
+                let decisionText = '—';
+                if (currentDayUpgrades.speedUpgrades > 0) {
+                    decisionText = `⚡ Speed Upgrade (-${currentDayUpgrades.speedUpgrades}s)`;
+                } else if (currentDayUpgrades.capUpgrades > 0) {
+                    decisionText = `📦 Cap Upgrade (+${currentDayUpgrades.capUpgrades * 5})`;
+                }
+                
+                row.innerHTML = `
+                    <td class="day-number">Day ${day.day}</td>
+                    <td class="currency-value">${day.startingCurrency.toFixed(2)}</td>
+                    <td class="decision-text">${decisionText}</td>
+                    <td class="pixel-value">+${Math.round(day.dailyPixels)}</td>
+                    <td style="opacity: 0.8">${Math.round(day.totalPixelsPlaced).toLocaleString()}</td>
+                    <td class="currency-value">${day.endingCurrency.toFixed(2)}</td>
+                    <td>
+                        <div class="button-group">
+                            <button class="table-btn"
+                                onclick="buyUpgrade(${day.day}, 'cap')" 
+                                ${!canAffordCap ? 'disabled' : ''}>
+                                Cap +5
+                            </button>
+                            <button class="table-btn"
+                                onclick="buyUpgrade(${day.day}, 'speed')" 
+                                ${!canAffordSpeed || isSpeedMaxed ? 'disabled' : ''}>
+                                Speed -1s
+                            </button>
+                        </div>
+                        <div style="font-size: 0.7em; margin-top: 5px; opacity: 0.6;">
+                            Rate: ${day.currentRegenRate}s | Cap: ${day.currentCapacity}
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function buyUpgrade(day, type) {
+            if (!state.upgrades[day]) {
+                state.upgrades[day] = { capUpgrades: 0, speedUpgrades: 0 };
+            }
+            
+            if (type === 'cap') {
+                state.upgrades[day].capUpgrades++;
+            } else if (type === 'speed') {
+                state.upgrades[day].speedUpgrades++;
+            }
+            
+            state.isOptimized = false;
+            recalculateAllDays();
+        }
+
+        function updateChart(days) {
+            const ctx = document.getElementById('currencyChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: days.map(d => `Day ${d.day}`),
+                    datasets: [{
+                        label: 'Total Pixels Placed (Cumulative)',
+                        data: days.map(d => d.totalPixelsPlaced),
+                        borderColor: '#d4a5ff',
+                        backgroundColor: 'rgba(212, 165, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#d4a5ff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e4e4e4' } },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Pixels: ${Math.round(context.raw).toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#e4e4e4' },
+                            title: { display: true, text: 'Total Pixels Placed', color: '#d4a5ff' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#e4e4e4' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStats(days) {
+            const lastDay = days[days.length - 1];
+            document.getElementById('currentRate').textContent = `${lastDay.currentRegenRate}s`;
+            document.getElementById('currentCap').textContent = `${lastDay.currentCapacity} pixels`;
+            document.getElementById('totalPixels').textContent = Math.round(lastDay.totalPixelsPlaced).toLocaleString();
+            document.getElementById('totalEarnings').textContent = lastDay.endingCurrency.toFixed(2);
+            document.getElementById('speedUpgrades').textContent = lastDay.totalSpeedUpgrades;
+            document.getElementById('capUpgrades').textContent = lastDay.totalCapUpgrades;
+        }
+
+        function resetSimulation() {
+            state.upgrades = {};
+            state.isOptimized = false;
+            recalculateAllDays();
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
