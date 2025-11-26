@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Economy Optimizer (Aggressive)</title>
+    <title>Pixel Economy Optimizer (Unified)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
+        /* Base styles from paint.html for dark theme */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,7 +15,7 @@
             padding: 20px;
             min-height: 100vh;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .container { max-width: 1600px; margin: 0 auto; } /* Increased max-width */
         h1 {
             text-align: center; margin-bottom: 30px; color: #a78bfa;
             font-size: 2.5em; text-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
@@ -57,15 +58,28 @@
         .optimize-btn:hover { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); transform: translateY(-2px); }
         .reset-btn { background: #475569; }
         .reset-btn:hover { background: #64748b; }
-        
         .chart-container {
             background: rgba(30, 41, 59, 0.7); border-radius: 15px; padding: 20px;
             height: 400px; margin-bottom: 30px; border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        
+        /* Table Layout for Summary + Detail */
+        .data-layout {
+            display: flex;
+            gap: 20px;
+        }
         .table-container {
+            flex: 3; /* Main table takes more space */
             background: rgba(30, 41, 59, 0.7); border-radius: 15px; padding: 20px;
             overflow-x: auto; border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        .summary-container {
+            flex: 1; /* Summary table takes less space */
+            background: rgba(30, 41, 59, 0.7); border-radius: 15px; padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 300px;
+        }
+
         table { width: 100%; border-collapse: collapse; }
         th {
             background: rgba(15, 23, 42, 0.8); padding: 15px; text-align: left;
@@ -84,11 +98,44 @@
         .tag-cap { background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.4); }
         
         .calculating { opacity: 0.5; pointer-events: none; cursor: wait; }
+
+        /* Styles for Manual Buttons (re-added from geo.html) */
+        .manual-actions button {
+            border: none; padding: 6px 10px; border-radius: 5px; color: white;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.75em;
+            margin: 2px 0;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        }
+        .manual-actions button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Summary List Styling */
+        .upgrade-list {
+            list-style: none;
+            padding-left: 0;
+            font-size: 0.9em;
+        }
+        .upgrade-list li {
+            padding: 5px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        .upgrade-list li:last-child {
+            border-bottom: none;
+        }
+        .upgrade-list-day {
+            font-weight: bold;
+            color: #4ade80;
+            margin-right: 5px;
+        }
+        
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎨 Pixel Economy Optimizer</h1>
+        <h1>🎨 Pixel Economy Optimizer (Unified)</h1>
         
         <div class="controls">
             <div class="control-group">
@@ -120,10 +167,10 @@
             
             <div class="button-row">
                 <button class="optimize-btn" onclick="runAutoOptimize()">
-                    ⚡ Auto-Optimize (Aggressive)
+                    ⚡ Auto-Optimize (Aggressive Lookahead)
                 </button>
                 <button class="reset-btn" onclick="resetSim()">
-                    ❌ Reset
+                    ❌ Reset All Upgrades
                 </button>
             </div>
         </div>
@@ -132,20 +179,30 @@
             <canvas id="mainChart"></canvas>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Day</th>
-                        <th>Start Bank</th>
-                        <th>Purchases</th>
-                        <th>Pixel Yield</th>
-                        <th>Total Pixels</th>
-                        <th>End Bank</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+        <div class="data-layout">
+            <div class="table-container">
+                <h2 style="margin-bottom: 15px; color: #a78bfa;">Day-by-Day Simulation</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Start Bank</th>
+                            <th>Purchases</th>
+                            <th>Daily Pixels</th>
+                            <th>Total Pixels</th>
+                            <th>End Bank</th>
+                            <th>Manual Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="summary-container">
+                <h2 style="margin-bottom: 15px; color: #a78bfa;">Upgrade Summary</h2>
+                <ul class="upgrade-list" id="upgradeSummaryList">
+                    </ul>
+            </div>
         </div>
     </div>
 
@@ -166,12 +223,13 @@
         // --- STATE ---
         let state = {
             inactiveHours: 16,
-            upgrades: {} // { dayNum: { speed: 0, cap: 0 } }
+            // Upgrades are tracked by day: { dayNum: { speed: 0, cap: 0 } }
+            upgrades: {} 
         };
 
         let chartInstance = null;
 
-        // --- CORE SIMULATION LOGIC ---
+        // --- CORE SIMULATION LOGIC (From paint.html) ---
 
         // Helper: Clone stats object
         function cloneStats(s) {
@@ -179,12 +237,11 @@
         }
 
         // Helper: Project outcome from a specific day to Day 30 without changing state
-        // This is the "Crystal Ball" function for the optimizer
         function projectRestOfMonth(startDay, currentStats, inactiveHours) {
             let simStats = cloneStats(currentStats);
             
             // Loop from current day to end of month
-            // We assume NO MORE upgrades are bought after today for this projection
+            // Note: CurrentStats has ALREADY SPENT on any upgrades for the current day
             for (let d = startDay; d <= 30; d++) {
                 // 1. Calculate Daily Income based on current stats
                 let activeSec = (24 - inactiveHours) * 3600;
@@ -207,7 +264,7 @@
             return simStats.totalPixels;
         }
 
-        // The "Brain" - Aggressive Optimizer
+        // The "Brain" - Aggressive Optimizer (From paint.html)
         function findAggressivePath(inactiveHours) {
             let optimalUpgrades = {};
             
@@ -223,13 +280,13 @@
                 optimalUpgrades[day] = { speed: 0, cap: 0 };
                 
                 // THE AGGRESSIVE LOOP
-                // Keep buying upgrades on THIS day until we can't or it's not worth it
                 let keepBuying = true;
                 
                 while (keepBuying) {
                     let bestMove = 'none';
                     // 1. Calculate Baseline (Stop buying and just finish the month)
-                    let baselineTotal = projectRestOfMonth(day, currentStats, inactiveHours);
+                    // Note: We MUST use a fresh copy of currentStats for the projection, because the projection function will add daily earnings to it, which shouldn't affect the real currentStats until the end of the day.
+                    let baselineTotal = projectRestOfMonth(day, cloneStats(currentStats), inactiveHours);
                     let bestTotal = baselineTotal;
 
                     // 2. Simulate Buying Speed (if affordable)
@@ -262,13 +319,13 @@
                         bestTotal = speedTotal;
                     }
                     
-                    // If Cap is better than Baseline AND better than Speed (or equal/speed impossible)
+                    // Note: Check cap against the best score so far (could be speed or baseline)
                     if (capTotal > bestTotal) {
                         bestMove = 'cap';
                         bestTotal = capTotal;
                     }
 
-                    // 5. Execute Decision
+                    // 5. Execute Decision (update real stats AND optimalUpgrades)
                     if (bestMove === 'speed') {
                         currentStats.currency -= CONSTANTS.COST_SPEED;
                         currentStats.regenRate -= CONSTANTS.GAIN_SPEED;
@@ -301,29 +358,33 @@
             return optimalUpgrades;
         }
 
-        // Standard Simulator for UI Rendering
+        // Standard Simulator for UI Rendering (Modified to track more stats)
         function simulateFullMonth() {
             let history = [];
             let stats = {
                 regenRate: CONSTANTS.START_RATE,
                 capacity: CONSTANTS.START_CAP,
                 currency: CONSTANTS.START_CURRENCY,
-                totalPixels: 0
+                totalPixels: 0,
+                totalSpeedUpgrades: 0,
+                totalCapUpgrades: 0
             };
 
             for (let day = 1; day <= 30; day++) {
                 let startBank = stats.currency;
                 
-                // Check for upgrades for this day
+                // Get current upgrades for this day (may be empty if no manual/auto decision)
                 let dayUpgrades = state.upgrades[day] || { speed: 0, cap: 0 };
                 
-                // Apply Costs & Stats immediately (assuming bought at start of day)
+                // --- Apply Costs & Stats (Before Earnings) ---
                 let cost = (dayUpgrades.speed * CONSTANTS.COST_SPEED) + (dayUpgrades.cap * CONSTANTS.COST_CAP);
                 stats.currency -= cost;
                 stats.regenRate -= (dayUpgrades.speed * CONSTANTS.GAIN_SPEED);
                 stats.capacity += (dayUpgrades.cap * CONSTANTS.GAIN_CAP);
+                stats.totalSpeedUpgrades += dayUpgrades.speed;
+                stats.totalCapUpgrades += dayUpgrades.cap;
 
-                // Calculate Income
+                // --- Calculate Income (Earning) ---
                 let activeSec = (24 - state.inactiveHours) * 3600;
                 let inactiveSec = state.inactiveHours * 3600;
                 
@@ -335,7 +396,7 @@
                 let dailyEarnings = dailyPixels / CONSTANTS.PIXELS_PER_CURRENCY;
                 
                 stats.totalPixels += dailyPixels;
-                stats.currency += dailyEarnings;
+                stats.currency += dailyEarnings; // Earning added at the end of the day
 
                 history.push({
                     day: day,
@@ -353,13 +414,82 @@
 
         // --- UI FUNCTIONS ---
 
+        // Function to manually purchase an upgrade
+        function buyUpgrade(day, type) {
+            if (!state.upgrades[day]) {
+                state.upgrades[day] = { speed: 0, cap: 0 };
+            }
+            
+            // We don't check affordability here, the simulation/UI will reflect the bank balance
+            // However, we should check max speed
+            if (type === 'speed') {
+                // Re-simulate up to this day to get current rate
+                const historyUpToDay = simulateFullMonth().slice(0, day);
+                const currentRate = historyUpToDay[day - 1] ? historyUpToDay[day - 1].currentRate : CONSTANTS.START_RATE;
+
+                if (currentRate > CONSTANTS.MIN_RATE) {
+                    state.upgrades[day].speed++;
+                } else {
+                    alert('Cannot buy Speed. Minimum rate (15s) has been reached or will be exceeded.');
+                    return;
+                }
+
+            } else if (type === 'cap') {
+                state.upgrades[day].cap++;
+            }
+            
+            recalculateAndRender();
+        }
+
+        // Function to run the auto-optimizer
+        function runAutoOptimize() {
+            let btn = document.querySelector('.optimize-btn');
+            btn.innerHTML = '⚙️ Calculating...';
+            btn.classList.add('calculating');
+
+            setTimeout(() => {
+                // The optimizer will generate a full upgrade path
+                state.upgrades = findAggressivePath(state.inactiveHours);
+                recalculateAndRender();
+                
+                btn.innerHTML = '⚡ Auto-Optimize (Aggressive Lookahead)';
+                btn.classList.remove('calculating');
+            }, 50);
+        }
+
+        function resetSim() {
+            state.upgrades = {};
+            recalculateAndRender();
+        }
+
+        function recalculateAndRender() {
+            let history = simulateFullMonth();
+            updateUI(history);
+            updateSummary(history);
+        }
+
         function updateUI(history) {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             
-            history.forEach(row => {
+            history.forEach((row, index) => {
                 let tr = document.createElement('tr');
                 
+                // Get stats from the END of the previous day (or start day 1)
+                const previousDayStats = index > 0 ? history[index - 1] : { currentRate: CONSTANTS.START_RATE, currentCap: CONSTANTS.START_CAP, endBank: CONSTANTS.START_CURRENCY };
+
+                // Get stats for the START of this day *before* spending
+                // Note: The history row 'startBank' is the currency AFTER earning from the previous day, but before spending on this day.
+                const preSpendBank = row.startBank;
+                
+                // Check if they can afford an *additional* upgrade
+                const canAffordCap = preSpendBank >= (row.upgrades.cap * CONSTANTS.COST_CAP) + (row.upgrades.speed * CONSTANTS.COST_SPEED) + CONSTANTS.COST_CAP;
+                const canAffordSpeed = preSpendBank >= (row.upgrades.cap * CONSTANTS.COST_CAP) + (row.upgrades.speed * CONSTANTS.COST_SPEED) + CONSTANTS.COST_SPEED;
+                
+                // Check max speed (currentRate is the rate *after* upgrades on this day)
+                const isSpeedMaxed = row.currentRate <= CONSTANTS.MIN_RATE;
+
+
                 let upgradeHtml = '';
                 if(row.upgrades.speed > 0) upgradeHtml += `<span class="decision-tag tag-speed">⚡ ${row.upgrades.speed}x Speed</span>`;
                 if(row.upgrades.cap > 0) upgradeHtml += `<span class="decision-tag tag-cap">📦 ${row.upgrades.cap}x Cap</span>`;
@@ -372,6 +502,14 @@
                     <td class="val-pixels">+${Math.round(row.dailyPixels).toLocaleString()}</td>
                     <td style="opacity: 0.8">${Math.round(row.totalPixels).toLocaleString()}</td>
                     <td class="val-currency">${row.endBank.toFixed(2)}</td>
+                    <td class="manual-actions" style="white-space: nowrap;">
+                        <button onclick="buyUpgrade(${row.day}, 'cap')" ${!canAffordCap ? 'disabled' : ''}>
+                            Cap (+${CONSTANTS.GAIN_CAP})
+                        </button>
+                        <button onclick="buyUpgrade(${row.day}, 'speed')" ${!canAffordSpeed || isSpeedMaxed ? 'disabled' : ''}>
+                            Speed (-${CONSTANTS.GAIN_SPEED}s)
+                        </button>
+                    </td>
                 `;
                 tableBody.appendChild(tr);
             });
@@ -385,6 +523,47 @@
 
             // Update Chart
             updateChart(history);
+        }
+
+        // Function to create the Upgrade Summary List
+        function updateSummary(history) {
+            const summaryList = document.getElementById('upgradeSummaryList');
+            summaryList.innerHTML = '';
+            
+            let totalSpeed = 0;
+            let totalCap = 0;
+
+            history.forEach(row => {
+                if (row.upgrades.speed > 0 || row.upgrades.cap > 0) {
+                    let li = document.createElement('li');
+                    let summaryText = `<span class="upgrade-list-day">Day ${row.day}:</span>`;
+
+                    if (row.upgrades.speed > 0) {
+                        summaryText += ` ${row.upgrades.speed}x Speed Upgrade`;
+                        totalSpeed += row.upgrades.speed;
+                    }
+                    if (row.upgrades.cap > 0) {
+                        if (row.upgrades.speed > 0) summaryText += ' & ';
+                        summaryText += ` ${row.upgrades.cap}x Cap Upgrade`;
+                        totalCap += row.upgrades.cap;
+                    }
+
+                    li.innerHTML = summaryText;
+                    summaryList.appendChild(li);
+                }
+            });
+
+            if (summaryList.children.length === 0) {
+                summaryList.innerHTML = '<li>No upgrades purchased yet.</li>';
+            } else {
+                // Add totals at the end
+                let totalLi = document.createElement('li');
+                totalLi.style.fontWeight = 'bold';
+                totalLi.style.marginTop = '10px';
+                totalLi.style.borderTop = '2px solid #a78bfa';
+                totalLi.innerHTML = `<span style="color: #a78bfa;">Total Upgrades:</span> ${totalSpeed} Speed, ${totalCap} Cap`;
+                summaryList.appendChild(totalLi);
+            }
         }
 
         function updateChart(history) {
@@ -420,39 +599,15 @@
             });
         }
 
-        function runAutoOptimize() {
-            let btn = document.querySelector('.optimize-btn');
-            btn.innerHTML = '⚙️ Calculating...';
-            btn.classList.add('calculating');
-
-            setTimeout(() => {
-                state.upgrades = findAggressivePath(state.inactiveHours);
-                let history = simulateFullMonth();
-                updateUI(history);
-                
-                btn.innerHTML = '⚡ Auto-Optimize (Aggressive)';
-                btn.classList.remove('calculating');
-            }, 50);
-        }
-
-        function resetSim() {
-            state.upgrades = {};
-            let history = simulateFullMonth();
-            updateUI(history);
-        }
-
         // Init
         document.getElementById('inactiveHours').addEventListener('input', (e) => {
             document.getElementById('inactiveValue').innerText = e.target.value + 'h';
             state.inactiveHours = parseInt(e.target.value);
-            // Re-run current upgrades with new hours or reset? 
-            // Usually safer to reset or re-calc. Let's re-calc sim with existing upgrades.
-            let history = simulateFullMonth();
-            updateUI(history);
+            recalculateAndRender();
         });
 
         // Run once on load
-        resetSim();
+        resetSim(); 
 
     </script>
 </body>
